@@ -6,13 +6,19 @@ import dio.me.PersonLocator.model.Endereco;
 import dio.me.PersonLocator.model.EnderecoRepository;
 import dio.me.PersonLocator.service.ClienteService;
 import dio.me.PersonLocator.service.ViaCepService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class ClienteServiceImpl implements ClienteService {
 
+    @Autowired
     private ClienteRepository clienteRepository;
+    @Autowired
     private EnderecoRepository enderecoRepository;
+    @Autowired
     private ViaCepService viaCepService;
 
     @Override
@@ -26,6 +32,7 @@ public class ClienteServiceImpl implements ClienteService {
         return cliente.get();
     }
 
+    @Override
     public void inserir(Cliente cliente) {
         salvarClienteComCep(cliente);
     }
@@ -41,18 +48,20 @@ public class ClienteServiceImpl implements ClienteService {
 
     @Override
     public void deletar(Long id) {
+        // Deletar Cliente por ID
         clienteRepository.deleteById(id);
     }
 
     private void salvarClienteComCep(Cliente cliente) {
-        //Verificar se o Endereço do Cliente já existe(pelo CEP).
+        // Verificar se o Endereço do Cliente já existe(pelo CEP).
         String cep = cliente.getEndereco().getCep();
         Endereco endereco = enderecoRepository.findById(cep).orElseGet(() -> {
             // Caso não exista, integrar com o ViaCep e persistir o retorno.
             Endereco novoEndereco = viaCepService.consultarCep(cep);
-            novoEndereco = enderecoRepository.save(novoEndereco);
+            enderecoRepository.save(novoEndereco);
             return novoEndereco;
         });
+
         cliente.setEndereco(endereco);
         //Inserir Cliente, vinculado o Endereço(novo ou existente).
         clienteRepository.save(cliente);
